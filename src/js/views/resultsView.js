@@ -18,7 +18,7 @@ class ResultsView extends View {
                 </figure>
                 <div class="preview__data">
                   <h4 class="preview__title">${recipe.title}</h4>
-                  <p class="preview__publisher">#{recipe.publisher}</p>
+                  <p class="preview__publisher">${recipe.publisher}</p>
                   <div class="preview__user-generated">
                     <svg>
                       <use href="${icons}#icon-user"></use>
