@@ -1,5 +1,5 @@
-import { API_URL, DEFAULT_RESULTS_PER_PAGE } from './config';
-import { getJSON } from './helper';
+import { API_KEY, API_URL, DEFAULT_RESULTS_PER_PAGE } from './config';
+import { getJSON, sendJSON } from './helper';
 export const state = {
   recipe: {},
   search: {
@@ -71,10 +71,10 @@ export const updateServings = function (newServings) {
 
 export const addBookmark = function (recipe) {
   // Add bookmark
-  this.state.bookmarks.push(recipe);
+  state.bookmarks.push(recipe);
 
   //Mark current recipe as bookmark
-  if (recipe.id === this.state.recipe.id) this.state.recipe.bookmarked = true;
+  if (recipe.id === state.recipe.id) state.recipe.bookmarked = true;
   persistBookmarks();
 };
 
@@ -90,3 +90,38 @@ const init = function () {
   if (storage) state.bookmarks = JSON.parse(storage);
 };
 init();
+
+export const uploadRecipe = async function (newRecipe) {
+  try {
+    const ingredients = Object.entries(newRecipe)
+      .filter(entry => entry[0].startsWith('ingredient') && entry[1] !== '')
+      .map(ing => {
+        const ingArr = ing[1].replaceAll(' ', ' ').split(',');
+        if (ingArr.length !== 3) {
+          throw new Error(
+            'Wrong ingredient format! Please use the correct format :)'
+          );
+        }
+        const [quantity, unit, description] = ingArr;
+        return { quantity: quantity ? +quantity : null, unit, description };
+      });
+    const createdRecipe = {
+      title: newRecipe.title,
+      source_url: newRecipe.sourceUrl,
+      image_url: newRecipe.image,
+      publisher: newRecipe.publisher,
+      cooking_time: +newRecipe.cookingTime,
+      servings: +newRecipe.servings,
+      ingredients,
+    };
+    const { recipe } = await sendJSON(
+      `${API_URL}?key=${API_KEY}`,
+      createdRecipe
+    );
+
+    state.recipe = recipe;
+    addBookmark(state.recipe);
+  } catch (err) {
+    throw err;
+  }
+};
